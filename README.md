@@ -1,4 +1,4 @@
-# 🌊 WaveMail!
+# 🌊 WaveMail
 
 ## Project Overview
 
@@ -59,7 +59,12 @@ Email APIs → Agent Processing → Vector Embeddings → Supabase
 Dashboard Tiles ← Chat Interface ← Task Extraction
 ```
 
-## Setup Instructions
+### Setup Instructions
+
+> 📖 **Developer Journal**: For detailed troubleshooting steps and daily development challenges, see [Developer Journal](./developer_journal.md)
+.
+> 
+
 
 ### Day 1 Deliverables Setup
 
@@ -140,22 +145,13 @@ Dashboard Tiles ← Chat Interface ← Task Extraction
 - **Ephemeral Tokens**: Minimal token lifetime where possible
 
 ### Data Protection
-- **Content Filtering**: Sensitive information removed before LLM processing
 - **No Raw Email Logging**: Email content never stored in application logs
-- **Input Validation**: Comprehensive validation on all user inputs and API endpoints
-- **Encrypted Storage**: All sensitive data encrypted in Supabase
 
 ### API Security
 - **CORS Configuration**: Properly configured cross-origin resource sharing
 - **Rate Limiting**: Protection against API abuse (planned for Days 2-6)
 - **Secure Headers**: Content Security Policy and security headers
 - **Input Sanitization**: XSS protection and SQL injection prevention
-
-### Privacy Safeguards
-- **PII Filtering**: Personal information filtered before AI processing  
-- **Minimal Data Retention**: Clear sensitive data after processing
-- **Access Controls**: Secure API endpoints with proper authentication
-- **Audit Logging**: Security events logged without sensitive content
 
 ### Risk Assessment
 - **Medium Risk**: Email content processing through external AI APIs
