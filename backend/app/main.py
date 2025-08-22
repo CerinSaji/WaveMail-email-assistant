@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from supabase import create_client
 from .config import settings
+import httpx
+import json
 
 # Create FastAPI app
 app = FastAPI(
@@ -19,16 +20,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Test database endpoint
-@app.get("/api/test-db")
-async def test_database():
-    try:
-        supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
-        result = supabase.table('emails').select('*').limit(5).execute()
-        return {"status": "success", "data": result.data}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
 # Simple test endpoint
 @app.get("/")
 async def root():
@@ -42,3 +33,57 @@ async def test():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+# Alternative database test using direct HTTP calls
+@app.get("/api/test-db")
+async def test_database():
+    try:
+        # Check if credentials are set
+        if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+            return {
+                "status": "error", 
+                "message": "Supabase credentials not found. Check your .env file"
+            }
+        
+        # Direct HTTP call to Supabase REST API
+        async with httpx.AsyncClient() as client:
+            headers = {
+                "apikey": settings.SUPABASE_KEY,
+                "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            # Test connection by selecting from emails table
+            url = f"{settings.SUPABASE_URL}/rest/v1/emails?select=*&limit=5"
+            response = await client.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "status": "success", 
+                    "message": "Database connected via REST API!",
+                    "data": data,
+                    "count": len(data)
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": f"Database connection failed. Status: {response.status_code}",
+                    "details": response.text
+                }
+                
+    except Exception as e:
+        return {
+            "status": "error", 
+            "message": f"Database connection failed: {str(e)}"
+        }
+
+# Debug config endpoint
+@app.get("/api/debug-config")
+async def debug_config():
+    return {
+        "supabase_url_set": bool(settings.SUPABASE_URL),
+        "supabase_key_set": bool(settings.SUPABASE_KEY),
+        "supabase_url_preview": settings.SUPABASE_URL[:30] + "..." if settings.SUPABASE_URL else "Not set",
+        "supabase_key_preview": settings.SUPABASE_KEY[:20] + "..." if settings.SUPABASE_KEY else "Not set"
+    }
