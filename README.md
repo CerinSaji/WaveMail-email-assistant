@@ -1,8 +1,8 @@
-# 🌊 WaveMail
+# 🌊 WaveMail - Surf through the email tides!
 
 ## Project Overview
 
-WaveMail is an AI-powered email assistant agent with agentic architecture that demonstrates modern LLM orchestration patterns. Built as part of a GenAI automation project, it uses LangChain orchestration, Azure OpenAI models, and a hybrid RAG + SQL approach to provide intelligent email management capabilities.
+WaveMail is an AI-powered email assistant agent with agentic architecture that demonstrates modern LLM orchestration patterns. Built as part of a GenAI automation project, it uses LangChain orchestration, Groq API, and a hybrid RAG + SQL approach to provide intelligent email management capabilities.
 
 The system automatically processes emails, extracts actionable tasks, identifies important communications, and provides a conversational interface for natural language email queries.
 
@@ -29,7 +29,7 @@ React Frontend (3000) <-> FastAPI Backend (8000) <-> Supabase PostgreSQL
                     [ImportanceTool] [TaskExtractionTool]
                     [EmailManagementTool]
                                 |
-                        Azure OpenAI (GPT-4)
+                        Groq API (Llama 3.1)
 ```
 
 ### Agentic Tool Architecture
@@ -49,7 +49,7 @@ Available Tools:
 - **Backend**: FastAPI v0.104.1, Python 3.x, LangChain
 - **Frontend**: React (latest), Tailwind CSS, Axios
 - **Database**: Supabase PostgreSQL with pgvector for embeddings
-- **AI**: Azure OpenAI (GPT-4 + text-embedding-ada-002)
+- **AI**: Groq API (LLM inference)
 - **Security**: cryptography library for token encryption
 
 ### Data Flow
@@ -68,11 +68,12 @@ Dashboard Tiles ← Chat Interface ← Task Extraction
 
 ### Day 1 Deliverables Setup
 
-#### Prerequisites
+### Prerequisites
 - Python 3.x
 - Node.js and npm
 - Git
 - Supabase account
+- Groq API account (free tier available)
 
 #### Backend Setup
 1. Clone the repository and navigate to backend:
