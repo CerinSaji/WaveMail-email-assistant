@@ -48,7 +48,30 @@ Switched from using the Supabase Python SDK client to direct HTTP calls using ht
 
 ---
 
-## Resources
+## Day 2: Agent Setup & LangChain Migration
+
+### Challenge 1: Dependency Conflicts in Requirements
+**Problem**: Multiple conflicting package versions prevented installation of required dependencies.
+
+**Solution**:
+- Used the official [pip dependency conflict resolution guide](https://pip.pypa.io/en/latest/topics/dependency-resolution/#dealing-with-dependency-conflicts) to better understand conflicts.
+
+- Applied selective installation with --no-deps and carefully pinned versions in requirements.txt to resolve conflicts.
+
+### Challenge 2: Groq API Compatiblity
+**Problem**: Using functions parameter with Groq caused errors.
+**Error Encountered**:
+```python
+AsyncCompletions.create() got an unexpected keyword argument 'functions'
+```
+**Key Learnings**:
+- pip provides strategies to handle dependency conflicts — official documentation was invaluable
+
+- Groq models differ in API parameter support → always confirm model capabilities
+
+- LangChain evolves quickly; deprecations require migrating to new agent constructors
+
+---
 
 ### Useful Commands
 ```bash

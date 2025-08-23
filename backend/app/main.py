@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
+load_dotenv() # Load .env file
+
 
 # Import existing modules (assuming these exist from Day 1)
 try:
@@ -20,8 +22,6 @@ except ImportError:
 # Import new agent routes
 from app.routers.agent_routes import router as agent_router
 
-# Load environment variables
-load_dotenv()
 
 # Lifespan event handler
 @asynccontextmanager
@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
     
     # Test agent initialization
     try:
-        from app.agent.wavemail_agent import get_agent
+        from app.tools.wavemail_agent import get_agent
         agent = get_agent()
         health = await agent.health_check()
         
@@ -140,7 +140,7 @@ async def get_api_status():
         # Test agent
         agent_status = "unknown"
         try:
-            from app.agent.wavemail_agent import get_agent
+            from app.tools.wavemail_agent import get_agent
             agent = get_agent()
             health = await agent.health_check()
             agent_status = health["status"]

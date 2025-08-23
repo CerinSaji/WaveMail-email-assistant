@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import asyncio
 
-from ..agent.wavemail_agent import get_agent
+from ..tools.wavemail_agent import get_agent
 
 # Create router
 router = APIRouter(prefix="/api", tags=["agent"])

@@ -16,22 +16,19 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from ..tools.agent_tools import get_agent_tools
 
+from langchain.agents import Tool
+from langchain.agents import AgentExecutor, create_structured_chat_agent
 
 class WaveMailAgent:
-    """
-    Main WaveMail agent class that orchestrates email management
-    using LangChain agents and Groq LLM with tool calling
-    """
-    
     def __init__(self):
         """Initialize the WaveMail agent with tools and memory"""
         self.groq_api_key = os.getenv("GROQ_API_KEY")
         if not self.groq_api_key:
             raise ValueError("GROQ_API_KEY environment variable is required")
         
-        # Initialize Groq LLM with function calling support
+        # Initialize Groq LLM
         self.llm = ChatGroq(
-            model="llama-3.1-70b-versatile",  # Best model for tool calling
+            model="llama-3.3-70b-versatile",
             temperature=0,
             max_tokens=4096,
             groq_api_key=self.groq_api_key,
@@ -44,39 +41,39 @@ class WaveMailAgent:
         # Get agent tools
         self.tools = get_agent_tools()
         
-        # Create agent prompt template
+        # Create agent prompt
         self.prompt = self._create_agent_prompt()
         
         # Initialize conversation memory
         self.memory = ConversationBufferMemory(
             memory_key="chat_history",
             return_messages=True,
-            max_token_limit=2000  # Keep memory manageable
+            max_token_limit=2000
         )
         
-        # Create the agent
+        # Create structured chat agent
         try:
-            self.agent = create_openai_functions_agent(
+            self.agent = create_structured_chat_agent(
                 llm=self.llm,
                 tools=self.tools,
                 prompt=self.prompt
             )
             
-            # Create agent executor
+            # Agent executor
             self.agent_executor = AgentExecutor(
                 agent=self.agent,
                 tools=self.tools,
                 memory=self.memory,
-                verbose=True,  # Set to False in production
+                verbose=True,
                 max_iterations=3,
                 early_stopping_method="generate",
                 handle_parsing_errors=True
             )
-            
         except Exception as e:
             print(f"Error initializing agent: {e}")
-            # Fallback to basic agent without function calling
             self.agent_executor = None
+
+
     
     def _create_agent_prompt(self) -> ChatPromptTemplate:
         """Create the system prompt for the agent"""
@@ -116,10 +113,11 @@ Remember: You're helping users manage their email efficiently while maintaining 
 
         return ChatPromptTemplate.from_messages([
             ("system", system_message),
-            ("placeholder", "{chat_history}"),
+            ("system", "{chat_history}"),
             ("human", "{input}"),
-            ("placeholder", "{agent_scratchpad}")
+            ("ai", "{agent_scratchpad}")
         ])
+
     
     async def process_query(self, query: str, user_context: Optional[Dict] = None) -> Dict[str, Any]:
         """

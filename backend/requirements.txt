@@ -5,14 +5,17 @@ python-multipart==0.0.6
 
 # Database
 supabase==2.0.0
-psycopg2-binary==2.9.10   # Windows-compatible wheel
+psycopg2-binary==2.9.10
 
 # AI & Agent Framework
+pydantic<2.0,>=1.10.12
 groq==0.4.1
-langchain==0.1.0
-langchain-groq==0.0.1
-langchain-experimental==0.0.51
-langchain-community==0.0.12
+# AI & Agent Framework
+langchain>=0.1.5,<0.2.0
+langchain-groq
+langchain-experimental
+langchain-community
+langsmith
 
 # Email Integration
 google-auth==2.25.2
@@ -20,11 +23,12 @@ google-auth-oauthlib==1.1.0
 google-api-python-client==2.110.0
 
 # Security & Utils
-cryptography==42.0.0      # Windows-compatible wheel
+cryptography==41.0.7
 python-dotenv==1.0.0
-pydantic==2.5.0
 requests==2.31.0
 
 # Additional utilities
-#email-mime-parser==0.1.0
 python-dateutil==2.8.2
+
+# Optional: email parsing tools
+# email-parser==1.1.0
