@@ -1,89 +1,173 @@
+# backend/main.py
+"""
+Updated FastAPI main application with Day 2 agent functionality
+"""
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .config import settings
-import httpx
-import json
+from contextlib import asynccontextmanager
+import os
+from dotenv import load_dotenv
+
+# Import existing modules (assuming these exist from Day 1)
+try:
+    from app.database.connection import test_database_connection
+except ImportError:
+    # Fallback if database module doesn't exist yet
+    async def test_database_connection():
+        return {"status": "database module not found"}
+
+# Import new agent routes
+from app.routers.agent_routes import router as agent_router
+
+# Load environment variables
+load_dotenv()
+
+# Lifespan event handler
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("🌊 WaveMail starting up...")
+    
+    # Verify environment variables
+    required_vars = ["GROQ_API_KEY", "SUPABASE_URL", "SUPABASE_KEY"]
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        print(f"⚠️ Warning: Missing environment variables: {missing_vars}")
+    else:
+        print("✅ Environment variables loaded")
+    
+    # Test agent initialization
+    try:
+        from app.agent.wavemail_agent import get_agent
+        agent = get_agent()
+        health = await agent.health_check()
+        
+        if health["status"] == "healthy":
+            print("🤖 WaveMail agent initialized successfully")
+        else:
+            print(f"⚠️ Agent health check failed: {health}")
+            
+    except Exception as e:
+        print(f"❌ Agent initialization failed: {e}")
+    
+    yield
+    
+    # Shutdown
+    print("🌊 WaveMail shutting down...")
 
 # Create FastAPI app
 app = FastAPI(
-    title="WaveMail API", 
-    description="AI Email Assistant Backend",
-    version="1.0.0"
+    title="WaveMail API",
+    description="AI-powered email assistant with agentic architecture",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
-# Allow React app to connect (CORS)
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React runs on port 3000
+    allow_origins=["http://localhost:3000"],  # React frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Simple test endpoint
+# Include agent routes
+app.include_router(agent_router)
+
+# Existing Day 1 endpoints
 @app.get("/")
 async def root():
-    return {"message": "WaveMail API is running! 🌊"}
+    """API status endpoint"""
+    return {
+        "message": "WaveMail API is running",
+        "version": "1.0.0",
+        "status": "active",
+        "features": [
+            "Agentic email processing",
+            "LangChain tool calling", 
+            "Groq LLM integration",
+            "Smart notifications",
+            "Task extraction",
+            "Conversational interface"
+        ]
+    }
 
-@app.get("/api/test")  
-async def test():
-    return {"status": "success", "message": "Backend connected!"}
-
-# Health check
 @app.get("/health")
-async def health():
-    return {"status": "healthy"}
+async def health_check():
+    """Basic health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "WaveMail API",
+        "timestamp": "2024-01-01T00:00:00Z"
+    }
 
-# Alternative database test using direct HTTP calls
+@app.get("/api/test")
+async def test_api():
+    """Test API connectivity"""
+    return {
+        "status": "success",
+        "message": "API is working correctly",
+        "backend_port": 8000
+    }
+
 @app.get("/api/test-db")
-async def test_database():
+async def test_db():
+    """Test database connectivity"""
     try:
-        # Check if credentials are set
-        if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
-            return {
-                "status": "error", 
-                "message": "Supabase credentials not found. Check your .env file"
-            }
+        result = await test_database_connection()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database connection failed: {str(e)}")
+
+# New Day 2 status endpoint
+@app.get("/api/status")
+async def get_api_status():
+    """
+    Comprehensive API status including agent health
+    """
+    try:
+        # Test database
+        db_status = "unknown"
+        try:
+            db_result = await test_database_connection()
+            db_status = "healthy" if db_result.get("status") == "connected" else "unhealthy"
+        except:
+            db_status = "unhealthy"
         
-        # Direct HTTP call to Supabase REST API
-        async with httpx.AsyncClient() as client:
-            headers = {
-                "apikey": settings.SUPABASE_KEY,
-                "Authorization": f"Bearer {settings.SUPABASE_KEY}",
-                "Content-Type": "application/json"
-            }
-            
-            # Test connection by selecting from emails table
-            url = f"{settings.SUPABASE_URL}/rest/v1/emails?select=*&limit=5"
-            response = await client.get(url, headers=headers)
-            
-            if response.status_code == 200:
-                data = response.json()
-                return {
-                    "status": "success", 
-                    "message": "Database connected via REST API!",
-                    "data": data,
-                    "count": len(data)
-                }
-            else:
-                return {
-                    "status": "error",
-                    "message": f"Database connection failed. Status: {response.status_code}",
-                    "details": response.text
-                }
-                
+        # Test agent
+        agent_status = "unknown"
+        try:
+            from app.agent.wavemail_agent import get_agent
+            agent = get_agent()
+            health = await agent.health_check()
+            agent_status = health["status"]
+        except:
+            agent_status = "unhealthy"
+        
+        return {
+            "api_status": "healthy",
+            "database_status": db_status,
+            "agent_status": agent_status,
+            "groq_api_configured": bool(os.getenv("GROQ_API_KEY")),
+            "environment": os.getenv("ENVIRONMENT", "development"),
+            "version": "1.0.0"
+        }
+        
     except Exception as e:
         return {
-            "status": "error", 
-            "message": f"Database connection failed: {str(e)}"
+            "api_status": "unhealthy",
+            "error": str(e)
         }
 
-# Debug config endpoint
-@app.get("/api/debug-config")
-async def debug_config():
-    return {
-        "supabase_url_set": bool(settings.SUPABASE_URL),
-        "supabase_key_set": bool(settings.SUPABASE_KEY),
-        "supabase_url_preview": settings.SUPABASE_URL[:30] + "..." if settings.SUPABASE_URL else "Not set",
-        "supabase_key_preview": settings.SUPABASE_KEY[:20] + "..." if settings.SUPABASE_KEY else "Not set"
-    }
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info"
+    )

@@ -1,5 +1,30 @@
+# Core FastAPI
 fastapi==0.104.1
-uvicorn[standard]==0.24.0
+uvicorn==0.24.0
+python-multipart==0.0.6
+
+# Database
+supabase==2.0.0
+psycopg2-binary==2.9.10   # Windows-compatible wheel
+
+# AI & Agent Framework
+groq==0.4.1
+langchain==0.1.0
+langchain-groq==0.0.1
+langchain-experimental==0.0.51
+langchain-community==0.0.12
+
+# Email Integration
+google-auth==2.25.2
+google-auth-oauthlib==1.1.0
+google-api-python-client==2.110.0
+
+# Security & Utils
+cryptography==42.0.0      # Windows-compatible wheel
 python-dotenv==1.0.0
 pydantic==2.5.0
-supabase==2.3.0
+requests==2.31.0
+
+# Additional utilities
+#email-mime-parser==0.1.0
+python-dateutil==2.8.2
