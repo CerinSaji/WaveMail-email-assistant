@@ -63,7 +63,7 @@ def get_body_from_google_api_payload(payload):
         
     return "No readable body found."
 
-# --- Fetch Emails Tool ---
+# --- Fetch Emails Tool ------
 @tool("fetch_emails")
 def fetch_emails(n: int = -1) -> list:
     """
@@ -97,6 +97,69 @@ def fetch_emails(n: int = -1) -> list:
         emails.append({"id": msg["id"], "subject": subject, "from": sender, "date": date, "snippet": body})
     return emails
 
+@tool("fetch_emails_by_sender")
+def fetch_emails_by_sender(user_query: str) -> list:
+    """Fetches emails from a specific sender mentioned in the user query, which can then be used by other tools.
+    """
+    # 1: Extract sender from the user query using LLM ---
+    prompt = f"""
+    You are an assistant that extracts the sender from a user query about emails.
+    Return only the sender's name or email, nothing else.
+
+    User query: "{user_query}"
+    """
+    response = llm.invoke(prompt)
+    sender_extracted = response.content.strip()
+
+    #2: check if sender is found in any email
+    service = get_gmail_service()
+
+    search_query = f'from:"{sender_extracted}"'
+    
+    print(f"Searching for emails from '{sender_extracted}'...")
+
+    results = service.users().messages().list(
+        userId='me',
+        q=search_query
+    ).execute()
+    
+    messages = results.get('messages', [])
+
+    if not messages:
+        print(f"No emails found from '{sender_extracted}'.")
+        return []
+
+    #3: Extract no of responses required from the user query using LLM ---
+    prompt = f"""
+    You are an assistant that extracts the number of emails to fetch from a user query about emails.
+    If mention 'latest' or 'recent', return 1.
+    Return only the integer number, nothing else.
+
+    User query: "{user_query}"
+    """
+    response = llm.invoke(prompt)
+    number_extracted = response.content.strip()
+
+    n = int(number_extracted) if number_extracted.isdigit() else 1
+
+    #4: Fetch emails from the sender
+    emails = []
+    for msg in messages:
+        msg_data = service.users().messages().get(userId="me", id=msg["id"]).execute()
+        headers = msg_data["payload"]["headers"]
+
+        subject = next((h["value"] for h in headers if h["name"] == "Subject"), "(No Subject)")
+        sender = next((h["value"] for h in headers if h["name"] == "From"), "(Unknown Sender)")
+        date = next((h["value"] for h in headers if h["name"] == "Date"), "(Unknown Date)")
+        #snippet = msg_data.get("snippet", "") -- instead of snippet, we'll get the entire body
+        body = get_body_from_google_api_payload(msg_data['payload'])
+        if len(body) > 500:
+            body = body[:1000] + "..."  #Truncate long bodies for efficiency (usually spam bodies are unusually long)
+
+        emails.append({"id": msg["id"], "subject": subject, "from": sender, "date": date, "snippet": body})
+    return emails
+
+    
 # -------------------------------------------------------------------------------------------
 # --- Classify Email Tool -------------------------------------------------------------------
 
@@ -133,6 +196,7 @@ def classify_email(email: dict) -> str:
     Classify if an email is important or not.
     Input: dict with subject, snippet, from
     Output: "important" or "not important"
+    Receives an email dict from one of the fetch emails tools.
     """
     subject = email.get("subject", "")
     snippet = email.get("snippet", "")
@@ -153,7 +217,7 @@ def classify_email(email: dict) -> str:
 def summarize_email(email: dict) -> str:
     """
     Summarize the given email (subject + snippet).
-    Input: dict with subject, snippet
+    Receives an email dict from one of the fetch emails tools.
     Output: short summary string
     """
     subject = email.get("subject", "")
@@ -193,7 +257,7 @@ def is_spam(email: Dict) -> bool:
 def generate_todo(email: dict) -> list:
     """
     Generate a todo list from the given email (subject + snippet).
-    Input: dict with subject, snippet
+    Receives an email dict from one of the fetch emails tools.
     Output: list of todo items
     """
     subject = email.get("subject", "")
