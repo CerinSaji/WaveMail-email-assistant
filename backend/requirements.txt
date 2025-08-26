@@ -1,0 +1,26 @@
+# Core
+fastapi
+uvicorn[standard]
+
+# Gmail API
+google-api-python-client
+google-auth
+google-auth-oauthlib
+
+bs4
+
+# LangChain + Groq
+langchain
+langchain-core
+langchain-community
+langchain-groq
+
+# Supabase (for storage later)
+supabase
+
+# Env management
+python-dotenv
+
+# (Optional but useful)
+requests
+pydantic
