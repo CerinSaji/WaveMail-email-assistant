@@ -97,6 +97,44 @@ Moves low-priority, spam, or marketing emails to trash/junk automatically.
 - **Security-Focused:** Minimal exposure of sensitive email content, secure API keys, and safe logging practices
 - **Extensible Design:** Can integrate additional LLMs, other email providers, or front-end frameworks
 
+## 🚀 Phase-wise Development of WaveMail
+
+### **Phase 1: Project Setup & Basic Email Fetching**
+- Initialized FastAPI backend and React frontend for testing
+- Configured Gmail API integration for reading emails
+- Implemented `.env` support for API keys and sensitive info
+- Created the basic `fetch_emails` tool to retrieve emails with subject, sender, date, and body
+
+### **Phase 2: Notifications Pipeline**
+- Developed deterministic pipeline to:
+  - Fetch emails
+  - Classify them as **important** or **not important** using rule-based logic + Groq LLM fallback
+  - Summarize emails for the notification tile
+- Added security considerations: using a **pre-authorized test Gmail account**, no raw email data is stored
+
+### **Phase 3: To-Do List Extraction**
+- Built `generate_todo` tool to extract actionable tasks from important emails
+- Implemented spam filtering for marketing/newsletter emails
+- Created a separate pipeline to:
+  - Fetch emails
+  - Skip marketing/spam emails
+  - Extract actionable tasks for display in a To-Do tile
+
+### **Phase 4: Frontend Integration**
+- Connected React frontend to FastAPI endpoints for:
+  - Notifications
+  - To-Do list
+- Implemented live fetching, rendering of results, and error handling
+- Added basic UI improvements like loading spinners and proper display formatting
+
+### **Phase 5: Chat Agent Prototype**
+- Developed a LangChain-based chat agent that can:
+  - Summarize emails
+  - Generate to-do items
+  - Fetch emails based on numeric queries or sender
+- Explored multi-tool usage and dynamic tool selection with system prompts
+- Ensured the agent can gracefully handle queries beyond current capabilities
+
 ## 🛡 Security & Privacy Considerations
 
 ### Test Environment

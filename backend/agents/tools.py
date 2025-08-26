@@ -132,7 +132,7 @@ def fetch_emails_by_sender(user_query: str) -> list:
     #3: Extract no of responses required from the user query using LLM ---
     prompt = f"""
     You are an assistant that extracts the number of emails to fetch from a user query about emails.
-    If mention 'latest' or 'recent', return 1.
+    If 'latest' or 'recent' mentioned, return 1.
     Return only the integer number, nothing else.
 
     User query: "{user_query}"
