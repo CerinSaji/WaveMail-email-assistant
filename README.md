@@ -1,6 +1,6 @@
 # 🌊 WaveMail – AI-Powered Email Assistant Agent
 
-**Tagline:** Surf through the email tides!
+**Surf through the email tides!**
 
 ## 🚀 Project Overview
 
