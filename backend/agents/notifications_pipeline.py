@@ -1,7 +1,7 @@
 from .tools import fetch_emails, classify_email, summarize_email
 
-def get_notifications(n):
-    emails = fetch_emails.func(n=n)
+def get_notifications():
+    emails = fetch_emails.func(n=5)  # Get notification for all UNREAD emails (unread not implemented yet, set it to 5 for now)
     notifications = []
 
     for email in emails:

@@ -10,10 +10,13 @@ import re
 # The official Google API library might not return a standard email.message.Message object.
 # The following function is tailored for the raw dictionary structure from the API.
 
+#----------FETCH EMAILS AND PARSE BODY------------------------------------------------------
+
 def get_body_from_google_api_payload(payload):
     """
     Parses the Google API 'payload' dictionary to find the email body.
     Prioritizes 'text/plain', falls back to 'text/html' and strips its tags.
+    This is to avoid getting html content with images and other unwanted elements.
     """
     text_plain = None
     text_html = None
@@ -62,10 +65,20 @@ def get_body_from_google_api_payload(payload):
 
 # --- Fetch Emails Tool ---
 @tool("fetch_emails")
-def fetch_emails(n: int = 5) -> list:
-    """Fetch last n emails with subject, sender, date, and snippet."""
+def fetch_emails(n: int = -1) -> list:
+    """
+    Fetch the last n emails with subject, sender, date, and body.
+    - If n > 0, only fetch the last n emails.
+    - If n <= 0 or omitted, fetch all emails.
+    """
     service = get_gmail_service()
-    results = service.users().messages().list(userId="me", maxResults=n).execute()
+
+    n = int(n) #chat api may pass action input as string
+
+    if n <= 0: # Fetch all emails (ie n is not mentioned)
+        results = service.users().messages().list(userId="me").execute()
+    else:
+        results = service.users().messages().list(userId="me", maxResults=n).execute()
     messages = results.get("messages", [])
 
     emails = []
@@ -78,12 +91,14 @@ def fetch_emails(n: int = 5) -> list:
         date = next((h["value"] for h in headers if h["name"] == "Date"), "(Unknown Date)")
         #snippet = msg_data.get("snippet", "") -- instead of snippet, we'll get the entire body
         body = get_body_from_google_api_payload(msg_data['payload'])
+        if len(body) > 500:
+            body = body[:1000] + "..."  #Truncate long bodies for efficiency (usually spam bodies are unusually long)
 
         emails.append({"id": msg["id"], "subject": subject, "from": sender, "date": date, "snippet": body})
     return emails
 
-
-# --- Classify Email Tool ---
+# -------------------------------------------------------------------------------------------
+# --- Classify Email Tool -------------------------------------------------------------------
 
 IMPORTANT_KEYWORDS = ["urgent", "asap", "deadline", "immediately"]
 
@@ -129,16 +144,10 @@ def classify_email(email: dict) -> str:
         return "important"
     else:
         return "not important"
+    
+# -------------------------------------------------------------------------------------------
+# --- Summarize Email Tool ------------------------------------------------------------------
 
-def llm_summarize(email_text: str) -> str:
-    """Use Groq LLM to summarize email into a concise sentence / phrase."""
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an assistant that summarizes emails in a single concise phrase."),
-        ("user", "Summarize this email. Do not mention names or additional context:\n\n{email}")
-    ])
-    chain = prompt | llm
-    response = chain.invoke({"email": email_text})
-    return response.content.strip()
 
 @tool("summarize_email", return_direct=False)
 def summarize_email(email: dict) -> str:
@@ -150,7 +159,16 @@ def summarize_email(email: dict) -> str:
     subject = email.get("subject", "")
     snippet = email.get("snippet", "")
     text = f"Subject: {subject}\nContent: {snippet}"
-    return llm_summarize(text)
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are an assistant that summarizes emails in a single concise phrase."),
+        ("user", "Summarize this email. Do not mention names or additional context:\n\n{email}")
+    ])
+    chain = prompt | llm
+    response = chain.invoke({"email": text})
+    return response.content.strip()
+# -------------------------------------------------------------------------------------------
+# --- Generate Todo List Tool --------------------------------------------------------------
 
 def is_spam(email: Dict) -> bool:
     """
@@ -203,3 +221,5 @@ def generate_todo(email: dict) -> list:
     ]
 
     return tasks
+
+# -------------------------------------------------------------------------------------------
