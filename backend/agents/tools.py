@@ -4,50 +4,9 @@ from .llm import llm
 from langchain_core.prompts import ChatPromptTemplate
 import base64
 from bs4 import BeautifulSoup 
+from typing import List, Dict
+import re
 
-
-def get_message_body(msg):
-    """
-    Decodes an email message and returns the body content.
-    Prioritizes 'text/plain', falls back to 'text/html' and strips its tags.
-    """
-    # If the message is multipart, recursively search for the parts
-    if msg.is_multipart():
-        # A multipart message will have a list of parts
-        for part in msg.get_payload():
-            # Recursively call this function for each part
-            body = get_message_body(part)
-            if body: # If a body was found in a subpart, return it
-                return body
-        return "" # If no body found in any part
-    
-    # If the message is not multipart, it has a single payload
-    content_type = msg.get_content_type()
-    payload = msg.get_payload(decode=True) # decode=True handles base64
-    
-    if payload is None:
-        return ""
-        
-    # Check the content type
-    if content_type == 'text/plain':
-        try:
-            return payload.decode('utf-8')
-        except UnicodeDecodeError:
-            return payload.decode('latin-1') # Fallback encoding
-
-    elif content_type == 'text/html':
-        # If we only have HTML, use BeautifulSoup to strip tags
-        soup = BeautifulSoup(payload, "html.parser")
-        # Find all image tags and remove them
-        for img_tag in soup.find_all('img'):
-            img_tag.decompose()
-        # Return the text content of the cleaned HTML
-        return soup.get_text(separator='\n', strip=True)
-        
-    # If it's another content type (like an attachment), ignore it
-    return ""
-
-# IMPORTANT NOTE:
 # The official Google API library might not return a standard email.message.Message object.
 # The following function is tailored for the raw dictionary structure from the API.
 
@@ -126,7 +85,7 @@ def fetch_emails(n: int = 5) -> list:
 
 # --- Classify Email Tool ---
 
-IMPORTANT_KEYWORDS = ["urgent", "asap", "deadline", "payment", "immediately"]
+IMPORTANT_KEYWORDS = ["urgent", "asap", "deadline", "immediately"]
 
 def rule_based_check(subject: str, snippet: str, sender: str) -> bool:
     """Simple keyword and sender-based rules for importance."""
@@ -142,12 +101,16 @@ def llm_fallback_check(email_text: str) -> bool:
     """Use Groq LLM to classify importance if rule-based is inconclusive."""
     prompt = ChatPromptTemplate.from_messages([
         ("system", "You are an assistant that classifies emails as 'important' or 'not important'. News / updates / newsletters / marketting emails are not important."),
-        ("user", "Email: {email}\n\nAnswer with only one word: Important or Not Important.")
+        ("user", "Email: {email}\n\nAnswer with only one word: reply Yes if important, or reply No if Not Important.")
     ])
     chain = prompt | llm
     response = chain.invoke({"email": email_text})
     decision = response.content.strip().lower()
-    return "important" in decision
+    if decision == "yes":
+        print("LLM-based: Classified as important.\n")
+        return True
+    print("LLM-based: Classified as not important.\n")
+    return False
 
 @tool("classify_email", return_direct=False)
 def classify_email(email: dict) -> str:
@@ -163,13 +126,12 @@ def classify_email(email: dict) -> str:
     if rule_based_check(subject, snippet, sender):
         return "important"
     elif llm_fallback_check(f"Subject: {subject}\nContent: {snippet}"):
-        print(f"LLM-based: Classified as important. - {subject}")
         return "important"
     else:
         return "not important"
 
 def llm_summarize(email_text: str) -> str:
-    """Use Groq LLM to summarize email into 1-2 sentences."""
+    """Use Groq LLM to summarize email into a concise sentence / phrase."""
     prompt = ChatPromptTemplate.from_messages([
         ("system", "You are an assistant that summarizes emails in a single concise phrase."),
         ("user", "Summarize this email. Do not mention names or additional context:\n\n{email}")
@@ -189,3 +151,55 @@ def summarize_email(email: dict) -> str:
     snippet = email.get("snippet", "")
     text = f"Subject: {subject}\nContent: {snippet}"
     return llm_summarize(text)
+
+def is_spam(email: Dict) -> bool:
+    """
+    Simple rule-based check to filter out spam emails.
+    """
+    subject = email.get("subject", "").lower()
+    body = email.get("snippet", "").lower()
+    spam_keywords = ["unsubscribe", "newsletter", "promo", "sale", "advertisement"]
+
+    # Combine subject and body, lowercase everything
+    text = (subject + " " + body).lower()
+
+    # Remove punctuation for safer matching
+    text = re.sub(r"[^\w\s]", " ", text)
+
+    if any(keyword in text for keyword in spam_keywords):
+        print(f"Filtered out as spam: {subject}")
+        return True
+    return False
+
+@tool("generate_todo", return_direct=False)
+def generate_todo(email: dict) -> list:
+    """
+    Generate a todo list from the given email (subject + snippet).
+    Input: dict with subject, snippet
+    Output: list of todo items
+    """
+    subject = email.get("subject", "")
+    body = email.get("snippet", "")
+    text = f"Subject: {subject}\nContent: {body}"
+
+    if is_spam(email):
+        return []
+    
+    print("Not spam!")
+
+    prompt = f"""
+    Extract all actionable tasks from the following email. 
+    Return as a list of concise task statements. Start the list with the subject line as context.
+    If no tasks, return an empty list.
+    Email:
+    {text}
+    """
+    response = llm.invoke(prompt)
+
+    tasks = [
+    line.strip("-• ").strip()
+    for line in llm.invoke(prompt).content.splitlines()
+    if line.strip()
+    ]
+
+    return tasks
