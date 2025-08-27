@@ -15,7 +15,7 @@ langchain-core
 langchain-community
 langchain-groq
 
-# Supabase (for storage later)
+# Supabase
 supabase
 
 # Env management

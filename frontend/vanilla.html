@@ -63,6 +63,31 @@
             letter-spacing: 0.5px;
         }
 
+        .refresh-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: block;
+            margin: 0 auto 3rem auto;
+            animation: slideDown 0.8s ease-out 0.4s both;
+        }
+
+        .refresh-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .refresh-button:active {
+            transform: translateY(0);
+        }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -221,6 +246,59 @@
             border-color: rgba(52, 211, 153, 0.2);
         }
 
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .todo-title {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 1.1rem;
+            flex: 1;
+        }
+
+        .todo-date {
+            color: #6b7280;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            margin-left: 1rem;
+        }
+
+        .todo-sender {
+            color: #10b981;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .todo-actions {
+            margin-top: 0.75rem;
+        }
+
+        .todo-actions ul {
+            list-style: none;
+            padding-left: 1rem;
+        }
+
+        .todo-actions li {
+            position: relative;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: #374151;
+        }
+
+        .todo-actions li::before {
+            content: '•';
+            color: #10b981;
+            font-weight: bold;
+            position: absolute;
+            left: -1rem;
+        }
+
         .notification-item:hover, .todo-item:hover {
             transform: translateX(4px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
@@ -259,47 +337,9 @@
             line-height: 1.5;
         }
 
-
-
-        .stats-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 1rem 2rem;
-            border-radius: 1rem;
-            margin-bottom: 3rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideDown 0.8s ease-out 0.2s both;
-        }
-
-        .stat-item {
-            text-align: center;
-            color: white;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 800;
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
         @media (max-width: 640px) {
             .header h1 {
                 font-size: 2.5rem;
-            }
-            
-            .stats-bar {
-                flex-direction: column;
-                gap: 1rem;
             }
             
             .tile {
@@ -314,6 +354,120 @@
         .tile.todos {
             animation-delay: 0.2s;
         }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        #chat-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            z-index: 1000;
+        }
+
+        #chat-icon:hover {
+            transform: scale(1.1);
+        }
+
+        #chat-window {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 320px;
+            height: 420px;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        #chat-window.hidden {
+            display: none;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            font-size: 0.95rem;
+            background: #f9fafb;
+        }
+
+        .chat-messages .user {
+            text-align: right;
+            margin-bottom: 0.5rem;
+            color: #1d4ed8;
+            font-weight: 500;
+        }
+
+        .chat-messages .bot {
+            text-align: left;
+            margin-bottom: 0.5rem;
+            color: #111827;
+            background: #e0e7ff;
+            display: inline-block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+        }
+
+        .chat-input-row {
+            display: flex;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            border: none;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .chat-input-row button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .chat-input-row button:hover {
+            background: #4f46e5;
+        }
+
+
     </style>
 </head>
 <body>
@@ -326,21 +480,16 @@
             <p>Surf through the email tides with style</p>
         </header>
 
-        <!-- Stats Bar -->
-        <div class="stats-bar">
-            <div class="stat-item">
-                <span class="stat-number" id="unread-count">--</span>
-                <span class="stat-label">Unread</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" id="tasks-count">--</span>
-                <span class="stat-label">Tasks</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" id="priority-count">--</span>
-                <span class="stat-label">Priority</span>
-            </div>
+        <!-- Action Buttons -->
+        <div class="button-row">
+            <button class="refresh-button" onclick="loadDashboard()">
+                🔄 Load Dashboard
+            </button>
+            <button class="refresh-button" id="sort-button" onclick="sortInbox()">
+                📂 Sort your inbox!
+            </button>
         </div>
+
 
         <!-- Dashboard Tiles -->
         <div class="dashboard-grid">
@@ -351,9 +500,7 @@
                     Notifications
                 </h2>
                 <div id="notifications-content">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                    </div>
+                    <div class="empty-state">Click "Load Dashboard" to fetch notifications</div>
                 </div>
             </div>
 
@@ -364,13 +511,28 @@
                     To-Do List
                 </h2>
                 <div id="todos-content">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                    </div>
+                    <div class="empty-state">Click "Load Dashboard" to fetch tasks</div>
                 </div>
             </div>
         </div>
 
+        <!-- Chatbot Floating Icon -->
+        <div id="chat-icon" onclick="toggleChat()">
+            💬
+        </div>
+
+        <!-- Chatbot Window -->
+        <div id="chat-window" class="hidden">
+            <div class="chat-header">
+                <span>WaveMail Assistant</span>
+                <button onclick="toggleChat()">✖</button>
+            </div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter'){sendChat();}">
+                <button onclick="sendChat()">Send</button>
+            </div>
+        </div>
 
     </div>
 
@@ -396,13 +558,6 @@
                 console.error('Failed to fetch todos:', error);
                 return [];
             }
-        }
-
-        // Update stats
-        function updateStats(notifications, todos) {
-            document.getElementById('unread-count').textContent = notifications.length;
-            document.getElementById('tasks-count').textContent = todos.length;
-            document.getElementById('priority-count').textContent = Math.floor(Math.random() * 3) + 1;
         }
 
         // Render notifications
@@ -433,7 +588,7 @@
             container.appendChild(list);
         }
 
-        // Render todos
+        // Render todos with proper formatting
         function renderTodos(todos) {
             const container = document.getElementById('todos-content');
             
@@ -445,11 +600,26 @@
             const list = document.createElement('ul');
             list.className = 'todo-list';
 
-            todos.forEach((todo, index) => {
+            todos.forEach((todoItem, index) => {
                 const item = document.createElement('li');
                 item.className = 'todo-item';
                 item.style.animationDelay = `${index * 0.1}s`;
-                item.textContent = todo.todo;
+                
+                // Parse the todo text into bullet points if it contains multiple actions
+                const todoActions = todoItem.todo.split(/[.!]\s+/).filter(action => action.trim());
+                
+                item.innerHTML = `
+                    <div class="todo-header">
+                        <div class="todo-title">${todoItem.subject}</div>
+                        <div class="todo-date">${new Date(todoItem.date).toLocaleDateString()}</div>
+                    </div>
+                    <div class="todo-sender">from ${todoItem.from}</div>
+                    <div class="todo-actions">
+                        <ul>
+                            ${todoActions.map(action => `<li>${action.trim()}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
                 list.appendChild(item);
             });
 
@@ -457,10 +627,11 @@
             container.appendChild(list);
         }
 
-        // Initialize dashboard
-        async function initDashboard() {
-            // Add some delay for better UX
-            await new Promise(resolve => setTimeout(resolve, 1500));
+        // Manual load function triggered by button
+        async function loadDashboard() {
+            // Show loading states
+            document.getElementById('notifications-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            document.getElementById('todos-content').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
             
             // Fetch and render notifications
             const notifications = await fetchNotifications();
@@ -469,10 +640,70 @@
             // Fetch and render todos  
             const todos = await fetchTodos();
             renderTodos(todos);
-
-            // Update stats
-            updateStats(notifications, todos);
         }
+
+        // Initialize dashboard - no auto-loading
+        async function initDashboard() {
+            // Dashboard starts empty, waiting for user to click load button
+            console.log('Dashboard initialized. Click "Load Dashboard" to fetch data.');
+        }
+
+        async function sortInbox() {
+        const button = document.getElementById('sort-button');
+        button.textContent = "⏳ Sorting...";
+        button.disabled = true;
+            try {
+                const response = await fetch('http://localhost:8000/automatedsort');
+                const data = await response.json();
+
+                console.log("Sort response:", data.response);
+                button.textContent = "✅ Inbox Sorted!";
+            } catch (error) {
+                console.error("Failed to sort inbox:", error);
+                button.textContent = "⚠️ Error!";
+            }
+        }
+
+        function toggleChat() {
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.classList.toggle('hidden');
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const messages = document.getElementById('chat-messages');
+            const query = input.value.trim();
+            if (!query) return;
+
+            // Show user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'user';
+            userMsg.textContent = query;
+            messages.appendChild(userMsg);
+            messages.scrollTop = messages.scrollHeight;
+
+            // Clear input
+            input.value = '';
+
+            // Show loading placeholder
+            const botMsg = document.createElement('div');
+            botMsg.className = 'bot';
+            botMsg.textContent = "⏳ Thinking...";
+            messages.appendChild(botMsg);
+            messages.scrollTop = messages.scrollHeight;
+
+            try {
+                const response = await fetch(`http://localhost:8000/chat?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                botMsg.textContent = data.response;
+            } catch (error) {
+                console.error("Chat error:", error);
+                botMsg.textContent = "⚠️ Failed to reach assistant.";
+            }
+
+            messages.scrollTop = messages.scrollHeight;
+        }
+
 
         // Start the dashboard when page loads
         document.addEventListener('DOMContentLoaded', initDashboard);

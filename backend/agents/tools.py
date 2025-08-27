@@ -236,7 +236,7 @@ def fetch_email_by_query(user_query: str) -> list:
 # -------------------------------------------------------------------------------------------
 # --- Classify Email Tool -------------------------------------------------------------------
 
-IMPORTANT_KEYWORDS = ["urgent", "asap", "deadline", "immediately"]
+IMPORTANT_KEYWORDS = ["urgent", "asap", "deadline", "immediately", "launch", "quarterly", "meeting", "project", "update", "report", "invoice", "payment", "schedule", "appointment", "reminder", "action required", "follow up", "important", "priority", "quarter"]
 
 def rule_based_check(subject: str, snippet: str, sender: str) -> bool:
     """Simple keyword and sender-based rules for importance."""
@@ -251,7 +251,7 @@ def rule_based_check(subject: str, snippet: str, sender: str) -> bool:
 def llm_fallback_check(email_text: str) -> bool:
     """Use Groq LLM to classify importance if rule-based is inconclusive."""
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an assistant that classifies emails as 'important' or 'not important'. Emails from work, company, HR are important. News  / newsletters / marketting emails are not important."),
+        ("system", "You are an assistant that classifies emails as 'important' or 'not important'. Emails from work, company, HR, such as event updates, results, etc. are important. News  / newsletters / marketting emails are not important."),
         ("user", "Email: {email}\n\nAnswer with only one word: reply Yes if important, or reply No if Not Important.")
     ])
     chain = prompt | llm
@@ -280,7 +280,7 @@ def classify_email(email: dict) -> str:
     elif llm_fallback_check(f"Subject: {subject}\nContent: {snippet}"):
         return "important"
     else:
-        return "not important"
+        return f"not important - {subject}"
     
 # -------------------------------------------------------------------------------------------
 # --- Summarize Email Tool ------------------------------------------------------------------
@@ -363,13 +363,7 @@ def generate_todo(email: dict) -> list:
     if response.content.strip().lower() in ["", "none", "no tasks", "no task", "no action", "empty string"]:
         return []
 
-    tasks = [
-    line.strip("-• ").strip()
-    for line in response.content.splitlines()
-    if line.strip()
-    ]
-
-    return tasks
+    return response.content.strip().split("\n")
 
 # -------------------------------------------------------------------------------------------
 # --- Sort Emails Tool ----------------------------------------------------------------------
