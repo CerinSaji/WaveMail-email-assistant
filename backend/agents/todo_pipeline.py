@@ -1,8 +1,7 @@
 from .tools import fetch_email_by_query, generate_todo
-import jsonify
 
 def get_todolist():
-    emails = fetch_email_by_query.func("is:important newer_than:1d")  # Get todo for all important emails
+    emails = fetch_email_by_query.func("is:important newer_than:7d")  # Get todo for all important emails
     todolist = []
 
     for email in emails:

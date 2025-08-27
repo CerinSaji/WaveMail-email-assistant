@@ -64,8 +64,8 @@ def get_body_from_google_api_payload(payload):
     return "No readable body found."
 
 # --- Fetch Emails Tool ------
-@tool("fetch_emails")
-def fetch_emails(n: int = -1) -> list:
+@tool("fetch_emails_by_number")
+def fetch_emails_by_number(n: int = -1) -> list:
     """
     Fetch the last n emails with subject, sender, date, and body.
     - If n > 0, only fetch the last n emails.
@@ -99,7 +99,7 @@ def fetch_emails(n: int = -1) -> list:
 
 @tool("fetch_emails_by_sender")
 def fetch_emails_by_sender(user_query: str) -> list:
-    """Fetches emails from a specific sender mentioned in the user query, which can then be used by other tools.
+    """CALL THIS TOOL ONLY IF YOU HAVE TO FETCH emails from a specific sender mentioned in the user query, which can then be used by other tools.
     """
     # 1: Extract sender from the user query using LLM ---
     prompt = f"""
@@ -225,7 +225,7 @@ def fetch_email_by_query(user_query: str) -> list:
         #snippet = msg_data.get("snippet", "") -- instead of snippet, we'll get the entire body
         body = get_body_from_google_api_payload(msg_data['payload'])
         if len(body) > 500:
-            body = body[:1000] + "..."  #Truncate long bodies for efficiency (usually spam bodies are unusually long)
+            body = body[:1500] + "..."  #Truncate long bodies for efficiency (usually spam bodies are unusually long)
 
         emails.append({"id": msg["id"], "subject": subject, "from": sender, "date": date, "snippet": body})
 
@@ -282,11 +282,7 @@ def classify_email(email: dict) -> str:
     else:
         return f"not important - {subject}"
     
-# -------------------------------------------------------------------------------------------
-# --- Summarize Email Tool ------------------------------------------------------------------
 
-
-@tool("summarize_email", return_direct=False)
 def summarize_email(email: dict) -> str:
     """
     Summarize the given email (subject + snippet).
@@ -327,13 +323,7 @@ def is_spam(email: Dict) -> bool:
         return True
     return False
 
-@tool("generate_todo", return_direct=False)
-def generate_todo(email: dict) -> list:
-    """
-    Generate a todo list from the given email (subject + snippet).
-    Receives an email dict from one of the fetch emails tools.
-    Output: list of todo items
-    """
+def generate_todo_for_email(email: Dict) -> List[str]:
     subject = email.get("subject", "")
     body = email.get("snippet", "")
     text = f"Subject: {subject}\nContent: {body}"
@@ -365,59 +355,104 @@ def generate_todo(email: dict) -> list:
 
     return response.content.strip().split("\n")
 
+@tool("generate_todo", return_direct=False)
+def generate_todo(emails: dict | list) -> list:
+    """
+    Generate a todo list from the given email(s) (subject + snippet).
+    Receives an email dict or list of email dicts from one of the fetch emails tools.
+    Output: list of todo items
+    """
+    todos = []
+
+    if isinstance(emails, list): #multiple emails
+        for email in emails:
+            response = generate_todo_for_email(email)
+            todos.append(response)
+    else: #single email
+        todos = generate_todo_for_email(emails)
+    
+    return todos
+
 # -------------------------------------------------------------------------------------------
 # --- Sort Emails Tool ----------------------------------------------------------------------
 
 @tool("sort_emails", return_direct=False)
-def sort_emails() -> str:
+def sort_emails(query: str = "") -> str:
     """
-    Sort emails into trash / spam / as identified.
+    cALL THIS TOOL WHEN YOU HAVE Sort and move emails into trash / spam / other categories as identified.
     """
     # Fetch all unread emails
-    unread_emails = fetch_email_by_query.func("is:unread")
+    unread_emails = fetch_email_by_query.func(query if query != "" else "is:unread")
 
-    # Sort emails into categories
-    for email in unread_emails:
-        subject = email.get("subject", "")
-        snippet = email.get("snippet", "")
-        message_id = email.get("id", "")
-        text = f"Subject: {subject}\nContent: {snippet}"
+    # Sort emails into categories if it's automated sorting
+    if query == "":
+        for email in unread_emails:
+            subject = email.get("subject", "")
+            snippet = email.get("snippet", "")
+            message_id = email.get("id", "")
+            text = f"Subject: {subject}\nContent: {snippet}"
 
-        if classify_email.func(email) == "important":
-            category = "inbox"
-            print(f"Classified as important (inbox) - {subject}")
-        else:
-            # ask LLM
-            prompt = f"""
-            You are an assistant that classifies emails into categories - 'trash', 'spam', 'CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_UPDATES', 'CATEGORY_FORUMS', 
-            and if nothing applies, 'inbox'. News come under updates. General informational emails come under forums.
-            Choose an apt classification for this email: "{text}"
-            Reply with only one word and no other context - trash, spam, CATEGORY_PROMOTIONS, CATEGORY_SOCIAL, CATEGORY_UPDATES, CATEGORY_FORUMS, inbox.
-            """
-            response = llm.invoke(prompt)
-            category = response.content.strip()
-
-            print(f"Classified as {category} - {subject}")
-        
-
-        # Move email to the appropriate category
-        service = get_gmail_service()
-        if category == "spam":
-            service.users().messages().spam(userId='me', id=message_id).execute()
-            print(f"Message with subject {subject} successfully reported as Spam.")
-        elif category == "trash":
-            service.users().messages().trash(userId='me', id=message_id).execute()
-            print(f"Message with subject {subject} successfully moved to Trash.")
-        else: #categories
-            categories = ['CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_UPDATES', 'CATEGORY_FORUMS']
-            if category in categories:
-                service.users().messages().modify(
-                    userId='me',
-                    id=message_id,
-                    body={'addLabelIds': [category], 'removeLabelIds': ['INBOX']}
-                ).execute()
-                print(f"Message with subject {subject} successfully moved to {category}.")
+            if classify_email.func(email) == "important":
+                category = "inbox"
+                print(f"Classified as important (inbox) - {subject}")
             else:
-                print(f"Message with subject {subject} left in Inbox.")
+                # ask LLM
+                prompt = f"""
+                You are an assistant that classifies emails into categories - 'trash', 'spam', 'CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_UPDATES', 'CATEGORY_FORUMS', 
+                and if nothing applies, 'inbox'. News come under updates. General informational emails come under forums.
+                Choose an apt classification for this email: "{text}"
+                Reply with only one word and no other context - trash, spam, CATEGORY_PROMOTIONS, CATEGORY_SOCIAL, CATEGORY_UPDATES, CATEGORY_FORUMS, inbox.
+                """
+                response = llm.invoke(prompt)
+                category = response.content.strip()
 
-    return "Sorting complete!"
+                print(f"Classified as {category} - {subject}")
+            
+
+            # Move email to the appropriate category
+            service = get_gmail_service()
+            if category == "spam":
+                service.users().messages().spam(userId='me', id=message_id).execute()
+                print(f"Message with subject {subject} successfully reported as Spam.")
+            elif category == "trash":
+                service.users().messages().trash(userId='me', id=message_id).execute()
+                print(f"Message with subject {subject} successfully moved to Trash.")
+            else: #categories
+                categories = ['CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_UPDATES', 'CATEGORY_FORUMS']
+                if category in categories:
+                    service.users().messages().modify(
+                        userId='me',
+                        id=message_id,
+                        body={'addLabelIds': [category], 'removeLabelIds': ['INBOX']}
+                    ).execute()
+                    print(f"Message with subject {subject} successfully moved to {category}.")
+                else:
+                    print(f"Message with subject {subject} left in Inbox.")
+
+        return "Sorting complete!"
+    else:
+        #find out where to sort the emails based on the user query - trash or spam
+        prompt = f"""
+        You are an assistant that classifies emails into 'trash' or 'spam' based on a user query.
+        If the user query indicates that the emails should be trashed, reply with 'trash'.
+        If the user query indicates that the emails should be marked as spam, reply with 'spam'.
+        If the user query does not clearly indicate either, reply with 'none'.
+        User query: "{query}"
+        """
+        response = llm.invoke(prompt)
+        action = response.content.strip().lower()
+        print(f"Action determined from query - {query}: {action}")
+        if action not in ["trash", "spam"]:
+            return "Beyond the scope of this tool. No action taken."
+        for email in unread_emails:
+            subject = email.get("subject", "")
+            message_id = email.get("id", "")
+
+            # Move email to the appropriate category
+            service = get_gmail_service()
+            if action == "spam":
+                service.users().messages().spam(userId='me', id=message_id).execute()
+                print(f"Message with subject {subject} successfully reported as Spam.")
+            elif action == "trash":
+                service.users().messages().trash(userId='me', id=message_id).execute()
+                print(f"Message with subject {subject} successfully moved to Trash.")

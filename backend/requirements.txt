@@ -15,12 +15,8 @@ langchain-core
 langchain-community
 langchain-groq
 
-# Supabase
-supabase
-
 # Env management
 python-dotenv
 
-# (Optional but useful)
 requests
 pydantic

@@ -49,14 +49,6 @@ LangChain Agent enables natural language interaction:
 **Example queries:**
 - "Summarize the last 5 emails."
 - "What are the action items from my email with Bob?"
-- "Which emails require urgent attention?"
-
-**Tool-based workflow:**
-```
-fetch_emails → classify_email → summarize_email / extract_todo_items → move_to_trash/junk
-```
-
-The agent dynamically decides which tools to call based on the user's query.
 
 ## 🔗 System Functionality
 
@@ -83,19 +75,12 @@ Highlights important emails with concise summaries.
 Extracts actionable items and updates in real-time.
 
 ### Automated Sorting
-Moves low-priority, spam, or marketing emails to trash/junk automatically.
+Moves low-priority, spam, or marketing emails to trash/junk/categories automatically.
 
 ### Chat Interface
 - LLM agent interprets queries, calls tools dynamically, and returns natural language results
 - Supports summaries, task extraction, importance classification, and email sorting queries
 
-## 📈 Project Highlights
-
-- **Hybrid Architecture:** Combines rule-based logic with LLM reasoning for reliability and nuance
-- **LangChain Tool Usage:** Core email operations are wrapped as LangChain tools to demonstrate agentic capabilities
-- **Pipeline vs Agent:** Distinguishes between deterministic pipelines (notifications, sorting, to-dos) and agentic tool orchestration (chat queries)
-- **Security-Focused:** Minimal exposure of sensitive email content, secure API keys, and safe logging practices
-- **Extensible Design:** Can integrate additional LLMs, other email providers, or front-end frameworks
 
 ## 🚀 Phase-wise Development of WaveMail
 
@@ -134,6 +119,22 @@ Moves low-priority, spam, or marketing emails to trash/junk automatically.
   - Fetch emails based on numeric queries or sender
 - Explored multi-tool usage and dynamic tool selection with system prompts
 - Ensured the agent can gracefully handle queries beyond current capabilities
+
+### **Phase 6: Automated Sorting**
+- Added automated sorting pipeline for incoming emails (e.g., Promotions, Work, Personal, etc.)
+- Sorting exposed as both:
+  - A pipeline endpoint (/automatedsort)
+  - A callable tool within the chat agent
+- This allowed notifications, to-do extraction, and chat queries to leverage sorted categories
+
+### **Phase 7: Hybrid Retrieval Attempt**
+- Implemented Hybrid Search prototype (SQL + RAG routing):
+  - SQL for structured queries (e.g., “Show me emails from Alice last week”)
+  - RAG (semantic retrieval) for unstructured queries (e.g., “Find the email about the quarterly report”)
+- Built database schema in SQLite for structured storage of Gmail metadata
+- Integrated FAISS + sentence-transformers for semantic vector search
+- Outcome: Routing worked, but integration with the chat agent failed due to tool chaining and orchestration issues
+- Decision: Kept hybrid retrieval as an experimental branch for future iterations
 
 ## 🛡 Security & Privacy Considerations
 

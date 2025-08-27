@@ -1,7 +1,7 @@
 from .tools import fetch_email_by_query, classify_email, summarize_email, sort_emails
 
 def get_notifications():
-    emails = fetch_email_by_query.func("is:important newer_than:1d")  # Get notification for important emails in the last 1 day
+    emails = fetch_email_by_query.func("is:important newer_than:2d")  # Get notification for important emails in the last 2 days
     notifications = []
 
     for email in emails:
