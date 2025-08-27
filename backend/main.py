@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from agents.notifications_pipeline import get_notifications
+from agents.notifications_pipeline import get_notifications, sort
 from agents.todo_pipeline import get_todolist
 from agents.chat_agent import run_chat
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,4 +25,9 @@ def todo():
 @app.get("/chat")
 def chat(query: str):
     response = run_chat(query)
+    return {"response": response}
+
+@app.get("/automatedsort")
+def automatedsort():
+    response = sort()
     return {"response": response}

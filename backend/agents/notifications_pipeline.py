@@ -1,7 +1,7 @@
-from .tools import fetch_emails, classify_email, summarize_email
+from .tools import fetch_email_by_query, classify_email, summarize_email, sort_emails
 
 def get_notifications():
-    emails = fetch_emails.func(n=5)  # Get notification for all UNREAD emails (unread not implemented yet, set it to 5 for now)
+    emails = fetch_email_by_query.func("is:important newer_than:1d")  # Get notification for important emails in the last 1 day
     notifications = []
 
     for email in emails:
@@ -15,3 +15,7 @@ def get_notifications():
                 "date": email["date"]
             })
     return notifications
+
+def sort():
+    print("Sorting emails...")
+    return sort_emails.func()

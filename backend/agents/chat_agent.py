@@ -3,10 +3,10 @@ from langchain.memory import ConversationBufferMemory
 from services.gmail_service import get_gmail_service
 from .llm import llm
 # Import your tools
-from agents.tools import fetch_emails, classify_email, summarize_email, generate_todo, fetch_emails_by_sender
+from agents.tools import fetch_emails, classify_email, summarize_email, generate_todo, fetch_emails_by_sender, fetch_email_by_query
 
 # Collect tools
-tools = [fetch_emails, classify_email, summarize_email, generate_todo, fetch_emails_by_sender]
+tools = [fetch_email_by_query, classify_email, summarize_email, generate_todo, fetch_emails_by_sender]
 
 # Memory for chat context
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)

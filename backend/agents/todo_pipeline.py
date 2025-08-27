@@ -1,7 +1,7 @@
-from .tools import fetch_emails, generate_todo
+from .tools import fetch_email_by_query, generate_todo
 
 def get_todolist():
-    emails = fetch_emails.func(n=5)  # Get todo for all emails (set it to 5 for now)
+    emails = fetch_email_by_query.func("is:important newer_than:1d")  # Get todo for all important emails
     todolist = []
 
     for email in emails:
