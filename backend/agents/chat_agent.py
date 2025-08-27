@@ -8,7 +8,6 @@ from agents.tools import (
     fetch_email_by_query,
     sort_emails,
     classify_email,
-    summarize_email,
     generate_todo,
     fetch_emails_by_sender
 )
@@ -19,7 +18,6 @@ tools = [
     fetch_email_by_query,
     sort_emails,
     classify_email,
-    summarize_email,
     generate_todo,
     fetch_emails_by_sender
 ]
