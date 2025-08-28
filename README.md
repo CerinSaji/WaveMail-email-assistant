@@ -4,149 +4,206 @@
 
 ## 🚀 Project Overview
 
-WaveMail is an intelligent email assistant designed to help users navigate their inbox efficiently, combining deterministic pipelines with LLM-driven agentic functionality. It integrates with Gmail to process messages and provides actionable insights through:
+WaveMail is an intelligent email assistant that helps users navigate their inbox efficiently by combining deterministic pipelines with LLM-driven agentic functionality. It integrates with Gmail to process messages and provides actionable insights through four core features:
 
-- **Notifications Tile** – highlights important or urgent emails
-- **To-Do List Tile** – automatically extracts tasks or action items from emails
-- **Interactive Chat Interface** – allows natural language queries over emails
-- **Automated Email Sorting** – moves junk, spam, or low-priority emails to the trash/junk folder
+- **Notifications Tile** – highlights important or urgent emails with AI-generated summaries
+- **To-Do List Tile** – automatically extracts tasks and action items from emails
+- **Interactive Chat Interface** – enables natural language queries over email data
+- **Automated Email Sorting** – moves junk, spam, or low-priority emails to appropriate folders
 
-WaveMail demonstrates the use of LangChain tools, Groq API for LLM processing, and hybrid rule-based + LLM reasoning for email management.
-
-## 🛠 Features
+## 🛠 Key Features
 
 ### 🔹 Notifications Tile
-
-- **Fetch Emails:** Retrieves recent emails from a pre-authorized Gmail test account
-- **Classify Emails:** Uses rule-based filters (keywords like "urgent," "deadline," "meeting") and optional LLM scoring for nuanced prioritization
-- **Summarize Emails:** Groq-powered LLM generates concise summaries for important emails
-- **Deterministic Pipeline:** Each step executes sequentially for predictable, reliable notifications
-
-**Example:**
-
-| From | Subject | Summary |
-|------|---------|---------|
-| Alice alice@example.com | Project Deadline | Reminder: Submit Q4 report by Friday. |
+- Fetches recent emails from Gmail
+- Classifies emails using rule-based filters (keywords like "urgent," "deadline," "meeting") with LLM fallback
+- Generates concise summaries for important emails using Groq API
 
 ### 🔹 To-Do List Tile
-
-- Automatically extracts actionable items from email content
+- Extracts actionable items from email content
 - Converts requests like "Please send the report by Friday" into tasks such as "Send the report"
-- Keeps the list updated dynamically as new emails arrive
+- Updates dynamically as new emails arrive
 
 ### 🔹 Automated Email Sorting
-
-**Move to Junk/Trash:** Detects marketing emails, spam, or low-priority messages using:
-- Rule-based filters (spam keywords, sender domains)
-- Optional LLM scoring for ambiguous cases
-
-**Dynamic Execution:** Automatically moves identified emails to appropriate folders, keeping the inbox clean and focused.
+- Detects and categorizes emails (Promotions, Work, Personal, etc.)
+- Uses rule-based filters and LLM scoring for ambiguous cases
+- Automatically moves emails to appropriate folders
 
 ### 🔹 Chat Interface
+- LangChain-powered agent for natural language email queries
+- Supports queries like "Summarize the last 5 emails" or "What are my action items from Bob?"
+- Dynamically selects appropriate tools based on user intent
 
-LangChain Agent enables natural language interaction:
+## 🚀 Setup Instructions
 
-**Example queries:**
-- "Summarize the last 5 emails."
-- "What are the action items from my email with Bob?"
+### Prerequisites
+- Python 3.8+
+- Gmail API credentials (see `guides/gmail_api_guide.md`)
+- Groq API key
 
-## 🔗 System Functionality
+### Installation
 
-### Deterministic Pipeline (Notifications, To-Do, and Sorting)
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd wavemail
+   ```
 
+2. **Backend Setup:**
+   ```bash
+   cd backend
+   python -m venv venv
+   
+   # Activate virtual environment
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Setup environment variables
+   cp ../guides/.env.example .env
+   # Edit .env file with your API keys and routes
+   
+   # Run the server
+   uvicorn main:app --reload
+   ```
+
+3. **Frontend Setup:**
+   ```bash
+   cd frontend
+   # Simply open index.html with Live Server extension in VS Code
+   # Or serve on localhost (e.g., http://localhost:5500)
+   ```
+
+4. **Gmail API Setup:**
+   - Follow the detailed guide in `guides/gmail_api_guide.md` to obtain Gmail API credentials
+   - Add the credentials to your `.env` file
+
+## 🔗 System Architecture
+
+![WaveMail Architecture Diagram](WaveMail%20-%20Architecture%20diagram.png)
+
+### Data Architecture
+WaveMail employs a **primarily SQL-based architecture** for email querying and modification, providing structured, reliable data operations. While a **hybrid approach combining both RAG-based (semantic search) and SQL-based (structured queries)** would offer superior capabilities for complex email retrieval and contextual understanding, the current implementation focuses on SQL due to:
+
+- **Time constraints** in the development cycle
+- **Security concerns** around vector embeddings and external dependencies
+- **Technical complexity** of RAG implementation and embedding management
+- **Reliability requirements** for production-ready email operations
+
+Future iterations will consider implementing hybrid retrieval for enhanced semantic search capabilities.
+
+### Deterministic Pipeline
 ```
-Fetch emails → Filter for importance → Summarize → Extract tasks → Move junk/trash
+Fetch emails → Classify importance → Generate summaries → Extract tasks → Sort emails
 ```
+Ensures predictable, reliable results for UI components.
 
-Ensures repeatable, predictable results for UI tiles and email organization.
+### Agentic Architecture
+- LLM agent decides which tools to invoke based on user queries
+- Tools are LangChain `@tool` wrappers for email operations
+- Demonstrates modern tool-calling and agentic behavior
 
-### Agentic LLM Queries (Chat Interface)
-
-- LLM decides which tools to invoke for answering user queries
-- Tools are LangChain `@tool` wrappers: fetch, summarize, classify, extract tasks, move emails
-- Demonstrates modern agentic architecture and tool-calling behavior
-
-## 🔍 Demonstration of Functionality
-
-### Notifications Tile
-Highlights important emails with concise summaries.
-
-### To-Do Tile
-Extracts actionable items and updates in real-time.
-
-### Automated Sorting
-Moves low-priority, spam, or marketing emails to trash/junk/categories automatically.
-
-### Chat Interface
-- LLM agent interprets queries, calls tools dynamically, and returns natural language results
-- Supports summaries, task extraction, importance classification, and email sorting queries
-
-
-## 🚀 Phase-wise Development of WaveMail
-
-### **Phase 1: Project Setup & Basic Email Fetching**
-- Initialized FastAPI backend and React frontend for testing
-- Configured Gmail API integration for reading emails
-- Implemented `.env` support for API keys and sensitive info
-- Created the basic `fetch_emails` tool to retrieve emails with subject, sender, date, and body
-
-### **Phase 2: Notifications Pipeline**
-- Developed deterministic pipeline to:
-  - Fetch emails
-  - Classify them as **important** or **not important** using rule-based logic + Groq LLM fallback
-  - Summarize emails for the notification tile
-- Added security considerations: using a **pre-authorized test Gmail account**, no raw email data is stored
-
-### **Phase 3: To-Do List Extraction**
-- Built `generate_todo` tool to extract actionable tasks from important emails
-- Implemented spam filtering for marketing/newsletter emails
-- Created a separate pipeline to:
-  - Fetch emails
-  - Skip marketing/spam emails
-  - Extract actionable tasks for display in a To-Do tile
-
-### **Phase 4: Frontend Integration**
-- Connected React frontend to FastAPI endpoints for:
-  - Notifications
-  - To-Do list
-- Implemented live fetching, rendering of results, and error handling
-- Added basic UI improvements like loading spinners and proper display formatting
-
-### **Phase 5: Chat Agent Prototype**
-- Developed a LangChain-based chat agent that can:
-  - Summarize emails
-  - Generate to-do items
-  - Fetch emails based on numeric queries or sender
-- Explored multi-tool usage and dynamic tool selection with system prompts
-- Ensured the agent can gracefully handle queries beyond current capabilities
-
-### **Phase 6: Automated Sorting**
-- Added automated sorting pipeline for incoming emails (e.g., Promotions, Work, Personal, etc.)
-- Sorting exposed as both:
-  - A pipeline endpoint (/automatedsort)
-  - A callable tool within the chat agent
-- This allowed notifications, to-do extraction, and chat queries to leverage sorted categories
-
-### **Phase 7: Hybrid Retrieval Attempt**
-- Implemented Hybrid Search prototype (SQL + RAG routing):
-  - SQL for structured queries (e.g., “Show me emails from Alice last week”)
-  - RAG (semantic retrieval) for unstructured queries (e.g., “Find the email about the quarterly report”)
-- Built database schema in SQLite for structured storage of Gmail metadata
-- Integrated FAISS + sentence-transformers for semantic vector search
-- Outcome: Routing worked, but integration with the chat agent failed due to tool chaining and orchestration issues
-- Decision: Kept hybrid retrieval as an experimental branch for future iterations
-
-## 🛡 Security & Privacy Considerations
-
-### Test Environment
-- **Test Gmail Account:** WaveMail uses a pre-authorized test Gmail account for prototype purposes
-- **No Raw Email Storage:** No raw email content is stored in any database or log
+## 🛡 Security & Privacy
 
 ### Data Protection
-- **API Keys & Secrets:** Stored securely in environment variables (`.env`) and not exposed in code
-- **Ephemeral Tokens:** Used where possible to minimize exposure
-- **Logs:** Avoid recording full email bodies
+- **Test Environment:** Uses pre-authorized test Gmail account for development, preventing access to personal email data
+- **No Persistent Storage:** Raw email content is never stored in databases, logs, or local files
+- **Secure Credentials:** API keys and sensitive information stored exclusively in environment variables
+- **Minimal LLM Exposure:** Only essential email metadata and content sent to external LLM services
+- **Token Management:** Gmail API tokens are handled securely with proper refresh mechanisms
 
-### Sensitive Data Handling
-- **Minimal LLM Exposure:** Only essential email content is sent to LLMs for summarization, task extraction, or importance scoring
-- **Hybrid Filtering:** Sensitive emails are handled primarily via rule-based logic, minimizing unnecessary exposure to LLM processing
+### Privacy Considerations
+- **Ephemeral Processing:** Email data exists only during active processing sessions
+- **Local Processing:** Where possible, classification and filtering use local rule-based systems
+- **API Rate Limiting:** Implements proper rate limiting to prevent excessive API calls
+- **Error Handling:** Sensitive information is never logged in error messages or debugging output
+
+## 🏗 Development Phases
+
+### Phase 1: Foundation & Email Integration
+- **Project Setup:** Initialized FastAPI backend with React frontend infrastructure
+- **Gmail API Integration:** Configured OAuth2 authentication and email fetching capabilities
+- **Environment Configuration:** Implemented secure `.env` support for API keys and sensitive configuration
+- **Basic Tools:** Created core `fetch_emails` tool for retrieving email metadata and content
+
+### Phase 2: Intelligence Layer - Notifications
+- **Classification Pipeline:** Developed hybrid rule-based + LLM classification for email importance
+- **Summarization Engine:** Integrated Groq API for generating concise email summaries
+- **Deterministic Processing:** Built reliable pipeline ensuring consistent notification results
+- **Security Implementation:** Established data handling protocols for sensitive email content
+
+### Phase 3: Task Management - To-Do Extraction
+- **Action Item Detection:** Built NLP-powered system to extract actionable tasks from email content
+- **Spam Filtering:** Implemented marketing/newsletter detection to improve task relevance
+- **Dynamic Updates:** Created real-time task list updates as new emails arrive
+- **Context Preservation:** Maintained task-to-email relationships for user reference
+
+### Phase 4: User Interface Integration
+- **Frontend Connectivity:** Connected React components to FastAPI endpoints
+- **Real-time Updates:** Implemented live data fetching with proper error handling
+- **User Experience:** Added loading states, error messages, and responsive design elements
+- **API Optimization:** Streamlined backend responses for efficient frontend consumption
+
+### Phase 5: Conversational AI - Chat Agent
+- **LangChain Integration:** Developed sophisticated chat agent using LangChain framework
+- **Multi-tool Orchestration:** Enabled dynamic tool selection based on user query intent
+- **Natural Language Processing:** Implemented context-aware query understanding and response generation
+- **Tool Chaining:** Created seamless integration between different email processing tools
+
+### Phase 6: Email Organization - Automated Sorting
+- **Category Classification:** Built intelligent email categorization (Work, Personal, Promotions, etc.)
+- **Automated Actions:** Implemented automatic email movement to appropriate folders
+- **Dual Interface:** Exposed sorting both as pipeline endpoint and chat agent tool
+- **Rule Optimization:** Fine-tuned classification rules for improved accuracy
+
+### Phase 7: Advanced Retrieval (Prototype)
+- **Hybrid Search Architecture:** Experimented with SQL + RAG routing system
+- **Database Design:** Created SQLite schema for structured email metadata storage
+- **Semantic Search:** Integrated FAISS + sentence-transformers for vector-based retrieval
+- **Integration Challenges:** Encountered tool chaining complexities with chat agent
+- **Future Planning:** Archived as experimental branch for future development
+
+## 📁 Project Structure
+
+```
+WM3/
+├── backend/
+│   ├── __pycache__/
+│   ├── agents/
+│   │   ├── __pycache__/
+│   │   ├── chat_agent.py
+│   │   ├── llm.py
+│   │   ├── pipelines.py
+│   │   └── tools.py
+│   ├── services/
+│   │   ├── __pycache__/
+│   │   ├── credentials.json
+│   │   ├── gmail_service.py
+│   │   └── token.json
+│   ├── venv/
+│   ├── .env
+│   ├── config.py
+│   ├── main.py
+│   └── requirements.txt
+├── frontend/
+│   └── vanilla.html
+├── guides/
+│   ├── .env.example
+│   ├── gmail_api_guide.md
+│   └── read_emails.py
+├── .gitignore
+├── README.md
+├── WaveMail - Architecture diagram.png
+└── WaveMail - demo video.mp4
+```
+
+## 🔧 Technology Stack
+
+- **Backend:** FastAPI, LangChain, Groq API
+- **Frontend:** HTML/CSS/JavaScript (vanilla)
+- **Email Integration:** Gmail API
+- **LLM Processing:** Groq for summarization and classification
+- **Agent Framework:** LangChain tools and agents
