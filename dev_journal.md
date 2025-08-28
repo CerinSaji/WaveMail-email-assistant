@@ -16,7 +16,7 @@ Langchain's official documentation was very beginner-friendly and the tutorials 
 
 With the help of gemini-2.5-pro (through LMArena), I was able to compile a comprehensive guide on the Gmail API that covered areas from fetching emails using various kinds of queries, to modifying labels and sorting emails.
 
-> **Link:** `[guides folder](./guides/)`
+> **Link:** [guides folder](./guides/)
 
 ## 🛠️ Building the Core Features
 
