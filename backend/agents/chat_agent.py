@@ -6,7 +6,7 @@ from .llm import llm
 from agents.tools import (
     fetch_emails_by_number,
     fetch_email_by_query,
-    sort_emails,
+    sort_and_move_emails,
     classify_email,
     generate_todo,
     fetch_emails_by_sender
@@ -16,7 +16,7 @@ from agents.tools import (
 tools = [
     fetch_emails_by_number,
     fetch_email_by_query,
-    sort_emails,
+    sort_and_move_emails,
     classify_email,
     generate_todo,
     fetch_emails_by_sender
@@ -36,13 +36,16 @@ chat_agent = initialize_agent(
     memory=memory,
     verbose=True,
     handle_parsing_errors=True,
-    max_iterations=5  # allows the agent to call multiple tools in one query
+    max_iterations=5, # allows the agent to call multiple tools in one query
+    return_direct=True
 )
 
 def run_chat(query: str) -> str:
     """
-    Run the chatbot with reasoning using one tool at a time. Keep chat history to send output back to the LLM for context.
-    If the answer requires multiple steps, call one tool at a time. Do not nest tool calls. For example, first call fetch_emails_by_number, then use the returned text as input to summarize_email.
+    Run the chatbot with reasoning using multiple tools as required. Keep chat history to send output back to the LLM for context.
+    Keep the action_input as a natural language query.
+    If the answer requires multiple steps, call one tool at a time. Do not nest tool calls.
+    Do not use json or any other formatting in the input when calling the tools. VERY IMPORTANT.
     Features:
     - Uses ReAct reasoning: Thought → Action → Observation → Next Thought
     - Calls one tool at a time, and then the next based on observations

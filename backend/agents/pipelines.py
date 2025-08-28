@@ -1,7 +1,7 @@
-from .tools import fetch_email_by_query, classify_email, summarize_email, sort_emails, generate_todo
+from .tools import fetch_email_by_query, classify_email, summarize_email, sort_and_move_emails, generate_todo
 
 def get_todolist():
-    emails = fetch_email_by_query.func("is:important newer_than:2d")  # Get todo for all important emails
+    emails = fetch_email_by_query.func("is:important")  # Get todo for all important emails
     todolist = []
 
     for email in emails:
@@ -17,7 +17,7 @@ def get_todolist():
     return todolist
 
 def get_notifications():
-    emails = fetch_email_by_query.func("is:important newer_than:2d")  # Get notification for important emails in the last 2 days
+    emails = fetch_email_by_query.func("is:important")  # Get notification for important emails
     notifications = []
 
     for email in emails:
@@ -34,4 +34,4 @@ def get_notifications():
 
 def sort():
     print("Sorting emails...")
-    return sort_emails.func()
+    return sort_and_move_emails.func()

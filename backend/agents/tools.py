@@ -185,8 +185,10 @@ def fetch_email_by_query(user_query: str) -> list:
     Emails with specific words in the subject: "subject:your words"
     Emails with specific words in the body: "your words"
     combination queries example: "is:unread from:jane.doe@example.com"
+    if it says "to:trash" or "to:spam" or "delete" or "move to trash" or "move to spam", fetch emails from inbox - "in:inbox"
+    If it says "sender": "The New York Times", "destination": "trash", fetch emails from inbox - 'in:inbox from:"The New York Times"'
 
-    If no search query can be extracted, return "None".
+    If no search query can be extracted, return "in:inbox is:unread".
 
     User query: "{user_query}"
     """
@@ -376,13 +378,23 @@ def generate_todo(emails: dict | list) -> list:
 # -------------------------------------------------------------------------------------------
 # --- Sort Emails Tool ----------------------------------------------------------------------
 
-@tool("sort_emails", return_direct=False)
-def sort_emails(query: str = "") -> str:
+@tool("sort_and_move_emails", return_direct=False)
+def sort_and_move_emails(query: str = "", **kwargs) -> str:
     """
-    cALL THIS TOOL WHEN YOU HAVE Sort and move emails into trash / spam / other categories as identified.
+    Fetches emails from a specific folder (default: inbox) based on criteria (sender, query, etc.)
+    and moves them to the requested folder (trash, spam, archive).
     """
-    # Fetch all unread emails
-    unread_emails = fetch_email_by_query.func(query if query != "" else "is:unread")
+    # Handle both cases: query string OR structured dict
+    if query:
+        user_query = query
+    elif kwargs:
+        # e.g., {"sender": "The New York Times", "destination": "trash"}
+        user_query = str(kwargs)  
+    else:
+        user_query = ""
+    print(f"User query for sorting: {user_query}")
+    
+    unread_emails = fetch_email_by_query.func(user_query)
 
     # Sort emails into categories if it's automated sorting
     if query == "":
@@ -399,7 +411,7 @@ def sort_emails(query: str = "") -> str:
                 # ask LLM
                 prompt = f"""
                 You are an assistant that classifies emails into categories - 'trash', 'spam', 'CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_UPDATES', 'CATEGORY_FORUMS', 
-                and if nothing applies, 'inbox'. News come under updates. General informational emails come under forums.
+                and if nothing applies, 'inbox'. News (eg: from the New York Times) come under updates. General informational emails come under forums.
                 Choose an apt classification for this email: "{text}"
                 Reply with only one word and no other context - trash, spam, CATEGORY_PROMOTIONS, CATEGORY_SOCIAL, CATEGORY_UPDATES, CATEGORY_FORUMS, inbox.
                 """
@@ -437,7 +449,7 @@ def sort_emails(query: str = "") -> str:
         If the user query indicates that the emails should be trashed, reply with 'trash'.
         If the user query indicates that the emails should be marked as spam, reply with 'spam'.
         If the user query does not clearly indicate either, reply with 'none'.
-        User query: "{query}"
+        User query: "{user_query}"
         """
         response = llm.invoke(prompt)
         action = response.content.strip().lower()
